@@ -1,0 +1,32 @@
+version: '3.4'
+
+services:
+  pokemondb:
+    image: postgres:latest
+    container_name: pokemon-db
+    environment:
+      - POSTGRES_DB=pokemon
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./.containers/db:/var/lib/postgresql/data
+
+  api:
+    image: ${DOCKER_REGISTRY-}api
+    container_name: pokemon-api
+    build:
+      context: .
+      dockerfile: API/Dockerfile
+    depends_on:
+      pokemondb:
+        condition: service_healthy
+    environment:
+      - DB_HOST=pokemondb
+      - DB_NAME=pokemon
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
